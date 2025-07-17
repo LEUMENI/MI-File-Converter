@@ -8,7 +8,6 @@ import os
 # Configuration de la page
 st.set_page_config(page_title="Convertisseur universel", layout="wide")
 
-
 # Titre principal
 st.title("🔄 MI File Converter  (Excel / CSV / SPSS ) → (JSON, CSV, Excel, Parquet)")
 
@@ -52,15 +51,24 @@ if uploaded_file:
         st.markdown("---")
         st.subheader("🧹 Nettoyage des données")
 
-        # Options de nettoyage
+        # Nettoyage : suppression des NaN
         remove_nan = st.checkbox("❌ Supprimer les lignes contenant des valeurs manquantes", value=False)
-        cols_to_exclude = st.multiselect("🚫 Colonnes à exclure du fichier final :", options=df.columns)
+
+        # Nouvelle fonctionnalité : colonnes à inclure
+        cols_to_include = st.multiselect("✅ Colonnes à INCLURE dans le fichier final (facultatif)", options=df.columns)
+
+        # Colonnes à exclure si rien n'est inclus
+        cols_to_exclude = st.multiselect("🚫 Colonnes à EXCLURE du fichier final (optionnel)", options=df.columns)
 
         # Application des nettoyages
         cleaned_df = df.copy()
         if remove_nan:
             cleaned_df = cleaned_df.dropna()
-        if cols_to_exclude:
+
+        # Si colonnes à inclure sélectionnées → priorité
+        if cols_to_include:
+            cleaned_df = cleaned_df[cols_to_include]
+        elif cols_to_exclude:
             cleaned_df = cleaned_df.drop(columns=cols_to_exclude)
 
         st.success(f"✅ Données nettoyées : {cleaned_df.shape[0]} lignes / {cleaned_df.shape[1]} colonnes")
@@ -93,7 +101,7 @@ if uploaded_file:
                 with st.expander("👁️ Aperçu JSON"):
                     st.code(json_str[:5000], language="json")
 
-                # Boutons de téléchargement
+                # Téléchargement
                 col1, col2 = st.columns(2)
                 with col1:
                     st.download_button("⬇️ Télécharger JSON", data=json_str,
